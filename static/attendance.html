@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>My Attendance - Smart Attendance</title>
+<style>
+  :root {
+    --bg1: #ffcc00;
+    --bg2: #ff6600;
+    --card-bg: #fff;
+    --muted: #666;
+    --accent: #ff8800;
+  }
+
+  body {
+    margin:0;
+    font-family: 'Poppins', sans-serif;
+    min-height:100vh;
+    background: linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:36px 16px;
+    box-sizing:border-box;
+  }
+
+  .app {
+    width:100%;
+    max-width:1100px;
+    background: rgba(255,255,255,0.96);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.18);
+    padding:18px;
+    box-sizing:border-box;
+  }
+
+  header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  header h1 {
+    margin:0;
+    font-size:20px;
+    color:#222;
+  }
+
+  .btn {
+    padding:10px 14px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary { background: linear-gradient(135deg,#ff8800,#ff5500); color:white; }
+  .btn.ghost { background:transparent; border:1px solid rgba(0,0,0,0.12); color:#222; }
+
+  .filters {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:14px;
+    align-items:center;
+  }
+
+  .select-input, .date-input {
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,0.12);
+    min-width:200px;
+    font-family: inherit;
+  }
+
+  .layout {
+    display:grid;
+    grid-template-columns: 280px 1fr;
+    gap:16px;
+    margin-top:18px;
+  }
+
+  @media (max-width:900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .summary-card {
+    background:var(--card-bg);
+    border-radius:12px;
+    padding:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+  }
+
+  .summary-title {
+    margin:0 0 8px 0;
+    font-size:16px;
+    color:#222;
+  }
+  .summary-grid {
+    display:grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:8px;
+  }
+  .summary-item {
+    background:#fff7e6;
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+  }
+  .summary-label {
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--muted);
+    letter-spacing:0.5px;
+  }
+  .summary-value {
+    margin-top:4px;
+    font-size:18px;
+    font-weight:700;
+  }
+
+  .right {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.98));
+    border-radius:12px;
+    padding:14px;
+    min-height:60vh;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  .section-title {
+    margin:0 0 8px 0;
+    font-size:15px;
+    color:#222;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .badge {
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:11px;
+    background:#fff7e6;
+    color:#aa6600;
+  }
+
+  .empty {
+    padding:24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .attendance-list {
+    margin-top:10px;
+  }
+
+  .attendance-group {
+    margin-bottom:14px;
+  }
+  .group-date {
+    font-size:13px;
+    font-weight:700;
+    color:#333;
+    margin-bottom:6px;
+  }
+
+  .row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#fff;
+    border-radius:10px;
+    padding:9px 10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.04);
+    margin-bottom:6px;
+    cursor:pointer;
+  }
+  .row-left {
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .avatar {
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#ffd580,#ff8800);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-weight:700;
+    font-size:16px;
+  }
+  .row-main-title {
+    font-size:13px;
+    font-weight:600;
+  }
+  .row-sub {
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  .status-pill {
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .status-present {
+    background:#e5ffea;
+    color:#157347;
+  }
+  .status-absent {
+    background:#ffe5e5;
+    color:#b02a37;
+  }
+
+  footer {
+    margin-top:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position:fixed; left:0; top:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:12000;
+  }
+  .modal {
+    width:420px;
+    max-width:95vw;
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin:0 0 8px 0; }
+  .modal-details div { margin-bottom:4px; font-size:13px; }
+</style>
+
+<script src="auth.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>🎓 My Attendance</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+        Track your attendance across all classes.
+      </div>
+    </div>
+    <div>
+      <button class="btn ghost" onclick="goBack()">⬅ Back</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <select id="classFilter" class="select-input">
+      <option value="__all__">All Classes</option>
+    </select>
+
+    <input id="dateFilter" class="date-input" type="date" />
+
+    <button class="btn ghost" onclick="clearFilters()">Clear Filters</button>
+  </div>
+
+  <div class="layout">
+    <!-- SUMMARY LEFT -->
+    <div class="summary-card">
+      <h2 class="summary-title">Overview</h2>
+      <div id="summarySubtitle" style="font-size:12px;color:var(--muted);margin-bottom:6px;">
+        Loading attendance...
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Total Sessions</div>
+          <div id="summaryTotal" class="summary-value">–</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Present</div>
+          <div id="summaryPresent" class="summary-value">–</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Absent</div>
+          <div id="summaryAbsent" class="summary-value">–</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Attendance %</div>
+          <div id="summaryPercent" class="summary-value">–</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST RIGHT -->
+    <div class="right">
+      <div class="section-title">
+        <span>Attendance Records</span>
+        <span id="listBadge" class="badge">Loading...</span>
+      </div>
+
+      <div id="attendanceContainer" class="attendance-list">
+        <div class="empty">Loading attendance...</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Logged in as: <strong id="studentEmailLabel"></strong></span>
+    <span onclick="logout()" style="cursor:pointer;text-decoration:underline;">Logout</span>
+  </footer>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailOverlay" class="modal-overlay" onclick="closeDetail(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="detailTitle">Session Details</h3>
+    <div id="detailBody" class="modal-details"></div>
+    <div style="text-align:right;margin-top:10px;">
+      <button class="btn ghost" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============== UTILITIES ============== */
+function $(id){ return document.getElementById(id); }
+function escapeHtml(s){
+  if(!s && s!==0) return '';
+  return String(s).replace(/[&<>"'`]/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'
+  })[m]);
+}
+function formatDateISO(ts){
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(ts){
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+function groupBy(arr, keyFn) {
+  const map = {};
+  arr.forEach(item => {
+    const k = keyFn(item);
+    if (!k) return;
+    if (!map[k]) map[k] = [];
+    map[k].push(item);
+  });
+  return map;
+}
+
+/* ============== AUTH GUARD ============== */
+const auth = getAuth();
+if (!auth || auth.role !== "student") {
+  window.location.href = "index.html";
+}
+$("studentEmailLabel").innerText = auth.email;
+
+/* ============== STATE ============== */
+let allRecords = [];        // all attendance from backend
+let filteredRecords = [];   // after filters
+
+/* ============== BACKEND FETCH ============== */
+
+async function loadAttendance() {
+  const container = $("attendanceContainer");
+  container.innerHTML = `<div class="empty">Loading attendance...</div>`;
+  $("summarySubtitle").innerText = "Loading attendance from server...";
+
+  try {
+    const res = await apiFetch("/attendance/student");
+    if (!res.ok) {
+      const body = await res.json().catch(()=>({}));
+      throw new Error(body.error || "Failed to load attendance");
+    }
+    const data = await res.json();
+    allRecords = Array.isArray(data) ? data : [];
+    buildClassFilter();
+    applyFilters();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="empty">Failed to load attendance. Please try again later.</div>`;
+    $("summarySubtitle").innerText = "Failed to load attendance.";
+    $("listBadge").innerText = "Error";
+  }
+}
+
+/* ============== FILTERS ============== */
+
+function buildClassFilter() {
+  const select = $("classFilter");
+  // reset, keep "All Classes"
+  select.innerHTML = `<option value="__all__">All Classes</option>`;
+
+  const classesMap = {};
+  allRecords.forEach(r => {
+    const cid = r.classId || r.classID || "unknown";
+    const cname = r.className || "Unknown Class";
+    const subj = r.subject || "";
+    if (!classesMap[cid]) {
+      classesMap[cid] = { id: cid, name: cname, subject: subj };
+    }
+  });
+
+  Object.values(classesMap).forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.name}${c.subject ? " (" + c.subject + ")" : ""}`;
+    select.appendChild(opt);
+  });
+}
+
+function applyFilters() {
+  const classId = $("classFilter").value;
+  const dateFilter = $("dateFilter").value || null;
+
+  filteredRecords = allRecords.filter(r => {
+    const cid = r.classId || r.classID || "unknown";
+    if (classId !== "__all__" && cid !== classId) return false;
+
+    if (dateFilter) {
+      const d = r.date || (r.timestamp ? formatDateISO(r.timestamp) : null);
+      if (d !== dateFilter) return false;
+    }
+    return true;
+  });
+
+  updateSummary();
+  renderAttendanceList();
+}
+
+function clearFilters() {
+  $("classFilter").value = "__all__";
+  $("dateFilter").value = "";
+  applyFilters();
+}
+
+/* ============== SUMMARY ============== */
+
+function updateSummary() {
+  const total = filteredRecords.length;
+  const present = filteredRecords.filter(r => (r.status || "Present").toLowerCase() === "present").length;
+  const absent = total - present;
+  const percent = total ? Math.round((present / total) * 100) : 0;
+
+  $("summaryTotal").innerText = total || "0";
+  $("summaryPresent").innerText = present || "0";
+  $("summaryAbsent").innerText = absent || "0";
+  $("summaryPercent").innerText = total ? percent + "%" : "–";
+
+  if (!allRecords.length) {
+    $("summarySubtitle").innerText = "No attendance records found yet.";
+  } else {
+    $("summarySubtitle").innerText = `Showing ${filteredRecords.length} of ${allRecords.length} records.`;
+  }
+}
+
+/* ============== LIST RENDERING ============== */
+
+function renderAttendanceList() {
+  const container = $("attendanceContainer");
+
+  if (!allRecords.length) {
+    container.innerHTML = `<div class="empty">No attendance records found yet.</div>`;
+    $("listBadge").innerText = "0 records";
+    return;
+  }
+
+  if (!filteredRecords.length) {
+    container.innerHTML = `<div class="empty">No records match the selected filters.</div>`;
+    $("listBadge").innerText = "0 records";
+    return;
+  }
+
+  $("listBadge").innerText = `${filteredRecords.length} record${filteredRecords.length !== 1 ? "s" : ""}`;
+
+  const groups = groupBy(filteredRecords, r => r.date || (r.timestamp ? formatDateISO(r.timestamp) : null));
+  const dates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+  container.innerHTML = "";
+  dates.forEach(dateStr => {
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "attendance-group";
+
+    const dateLabel = document.createElement("div");
+    dateLabel.className = "group-date";
+    const sessions = groups[dateStr].length;
+    dateLabel.innerText = `${dateStr} • ${sessions} session${sessions !== 1 ? "s" : ""}`;
+    groupDiv.appendChild(dateLabel);
+
+    groups[dateStr].forEach(rec => {
+      const name = rec.className || "Unknown Class";
+      const subject = rec.subject || "";
+      const status = (rec.status || "Present").toLowerCase();
+      const timeStr = rec.time || (rec.timestamp ? formatTime(rec.timestamp) : "");
+
+      const row = document.createElement("div");
+      row.className = "row";
+
+      row.innerHTML = `
+        <div class="row-left">
+          <div class="avatar">${escapeHtml(name[0] || "?")}</div>
+          <div>
+            <div class="row-main-title">${escapeHtml(name)}</div>
+            <div class="row-sub">
+              ${subject ? escapeHtml(subject) + " • " : ""}${timeStr ? escapeHtml(timeStr) : ""}
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="status-pill ${status === "present" ? "status-present" : "status-absent"}">
+            ${status === "present" ? "Present" : "Absent"}
+          </span>
+        </div>
+      `;
+
+      row.onclick = () => openDetail(rec, dateStr);
+      groupDiv.appendChild(row);
+    });
+
+    container.appendChild(groupDiv);
+  });
+}
+
+/* ============== DETAIL MODAL ============== */
+
+function openDetail(rec, dateStr) {
+  const timeStr = rec.time || (rec.timestamp ? formatTime(rec.timestamp) : "");
+  const cid = rec.classId || rec.classID || "";
+  const status = rec.status || "Present";
+  const distance = rec.distanceMeters ?? rec.distance;
+  const loc = rec.studentLocation || {};
+  const device = rec.device || "Unknown";
+
+  $("detailTitle").innerText = rec.className || "Session Details";
+
+  const lines = [];
+
+  lines.push(`<div><strong>Date:</strong> ${escapeHtml(dateStr || "")}</div>`);
+  if (timeStr) lines.push(`<div><strong>Time:</strong> ${escapeHtml(timeStr)}</div>`);
+  if (cid) lines.push(`<div><strong>Class ID:</strong> ${escapeHtml(cid)}</div>`);
+  if (rec.className) lines.push(`<div><strong>Class:</strong> ${escapeHtml(rec.className)}</div>`);
+  if (rec.subject) lines.push(`<div><strong>Subject:</strong> ${escapeHtml(rec.subject)}</div>`);
+  lines.push(`<div><strong>Status:</strong> ${escapeHtml(status)}</div>`);
+  lines.push(`<div><strong>Device:</strong> ${escapeHtml(device)}</div>`);
+  if (distance != null) {
+    lines.push(`<div><strong>Distance:</strong> ${escapeHtml(String(distance))} m</div>`);
+  }
+  if (loc.lat != null && loc.lon != null) {
+    lines.push(`<div><strong>Location:</strong> ${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lon))}</div>`);
+  }
+
+  $("detailBody").innerHTML = lines.join("");
+  $("detailOverlay").style.display = "flex";
+}
+function closeDetail(e){
+  if(e && e.target && e.target.id !== "detailOverlay") {
+    $("detailOverlay").style.display = "none";
+    return;
+  }
+  $("detailOverlay").style.display = "none";
+}
+
+/* ============== NAV / LOGOUT ============== */
+
+function goBack() {
+  window.location.href = "dashboard.html";
+}
+function logout() {
+  clearAuth();
+  window.location.href = "index.html";
+}
+
+/* ============== INIT ============== */
+
+$("classFilter").addEventListener("change", applyFilters);
+$("dateFilter").addEventListener("change", applyFilters);
+
+loadAttendance();
+
+</script>
+</body>
+</html>

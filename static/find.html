@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Find Student - Smart Attendance</title>
+<style>
+  :root {
+    --bg1: #ffcc00;
+    --bg2: #ff6600;
+    --card-bg: #fff;
+    --muted: #666;
+    --accent: #ff8800;
+  }
+
+  body {
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    min-height:100vh;
+    background: linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:36px 16px;
+    box-sizing:border-box;
+  }
+
+  .app {
+    width:100%;
+    max-width:1100px;
+    background: rgba(255,255,255,0.96);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.18);
+    padding:18px;
+    box-sizing:border-box;
+  }
+
+  header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+
+  header h1 {
+    margin:0;
+    font-size:20px;
+    color:#222;
+  }
+
+  .btn {
+    padding:10px 14px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary { background: linear-gradient(135deg,#ff8800,#ff5500); color:white; }
+  .btn.ghost { background:transparent; border:1px solid rgba(0,0,0,0.12); color:#222; }
+
+  .filters {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:14px;
+    align-items:center;
+  }
+
+  .select-input, .text-input, .date-input {
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,0.12);
+    min-width:200px;
+    font-family:inherit;
+  }
+
+  .layout {
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+
+  @media (max-width:900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .left-card {
+    background:var(--card-bg);
+    border-radius:12px;
+    padding:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+  }
+
+  .left-card h2 {
+    margin:0 0 8px 0;
+    font-size:16px;
+    color:#222;
+  }
+
+  .hint {
+    font-size:12px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .right {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.98));
+    border-radius:12px;
+    padding:14px;
+    min-height:60vh;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  .section-title {
+    margin:0 0 8px 0;
+    font-size:15px;
+    color:#222;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .badge {
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:11px;
+    background:#fff7e6;
+    color:#aa6600;
+  }
+
+  .empty {
+    padding:24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .results {
+    margin-top:10px;
+  }
+
+  .row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#fff;
+    border-radius:10px;
+    padding:9px 10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.04);
+    margin-bottom:8px;
+    cursor:pointer;
+  }
+
+  .row-left {
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .avatar {
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#ffd580,#ff8800);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-weight:700;
+    font-size:16px;
+  }
+
+  .row-main {
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .row-sub {
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  .row-right {
+    text-align:right;
+    font-size:12px;
+  }
+
+  .status-pill {
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .status-present {
+    background:#e5ffea;
+    color:#157347;
+  }
+  .status-absent {
+    background:#ffe5e5;
+    color:#b02a37;
+  }
+
+  footer {
+    margin-top:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position:fixed; left:0; top:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:12000;
+  }
+  .modal {
+    width:430px;
+    max-width:95vw;
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin:0 0 8px 0; }
+  .modal-details div { margin-bottom:4px; font-size:13px; }
+</style>
+
+<script src="auth.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>🔍 Find Student</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+        Search attendance by name, roll number or email.
+      </div>
+    </div>
+    <div>
+      <button class="btn ghost" onclick="goBack()">⬅ Back</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT FILTERS -->
+    <div class="left-card">
+      <h2>Filters</h2>
+      <div class="hint">Choose a class and search by student details.</div>
+
+      <div style="margin-top:12px;">
+        <label style="font-size:12px;">Class</label><br/>
+        <select id="classSelect" class="select-input">
+          <option value="">Loading classes...</option>
+        </select>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;">Search</label><br/>
+        <input id="searchInput" class="text-input" placeholder="Name, roll no, email..." />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;">Date (optional)</label><br/>
+        <input id="dateFilter" type="date" class="date-input" />
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        <button class="btn primary" onclick="applyFilters()">Search</button>
+        <button class="btn ghost" onclick="clearFilters()">Clear</button>
+      </div>
+
+      <div class="hint" style="margin-top:12px;">
+        Tip: Leave search empty to see all students for selected class.
+      </div>
+    </div>
+
+    <!-- RIGHT RESULTS -->
+    <div class="right">
+      <div class="section-title">
+        <span>Results</span>
+        <span id="resultsBadge" class="badge">Select a class</span>
+      </div>
+
+      <div id="resultsContainer" class="results">
+        <div class="empty">Select a class to view attendance.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Logged in as: <strong id="teacherEmailLabel"></strong></span>
+    <span onclick="logout()" style="cursor:pointer;text-decoration:underline;">Logout</span>
+  </footer>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailOverlay" class="modal-overlay" onclick="closeDetail(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="detailTitle">Student Attendance</h3>
+    <div id="detailBody" class="modal-details"></div>
+    <div style="text-align:right;margin-top:10px;">
+      <button class="btn ghost" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============== UTILITIES ============== */
+function $(id){ return document.getElementById(id); }
+function escapeHtml(s){
+  if(!s && s!==0) return '';
+  return String(s).replace(/[&<>"'`]/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'
+  })[m]);
+}
+function formatDateISO(ts){
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(ts){
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+}
+
+/* ============== AUTH GUARD ============== */
+const auth = getAuth();
+if (!auth || auth.role !== "teacher") {
+  window.location.href = "index.html";
+}
+$("teacherEmailLabel").innerText = auth.email;
+
+/* ============== STATE ============== */
+let classesList = [];
+let attendanceCacheByClass = {};   // classId → [records...]
+let filteredRecords = [];
+
+/* ============== BACKEND HELPERS ============== */
+
+// GET /api/classes/
+async function fetchClasses() {
+  const res = await apiFetch("/classes/");
+  if (!res.ok) {
+    const data = await res.json().catch(()=>({}));
+    throw new Error(data.error || "Failed to load classes");
+  }
+  return await res.json();
+}
+
+// GET /api/attendance/class/<id>
+async function fetchAttendanceForClass(classId) {
+  const res = await apiFetch(`/attendance/class/${encodeURIComponent(classId)}`);
+  if (!res.ok) {
+    const data = await res.json().catch(()=>({}));
+    throw new Error(data.error || "Failed to load attendance");
+  }
+  return await res.json();
+}
+
+/* ============== INIT CLASSES ============== */
+
+async function loadClasses() {
+  const select = $("classSelect");
+  select.innerHTML = `<option value="">Loading...</option>`;
+  try {
+    classesList = await fetchClasses();
+    if (!classesList.length) {
+      select.innerHTML = `<option value="">No classes found</option>`;
+      return;
+    }
+    select.innerHTML = `<option value="">Select a class</option>`;
+    classesList.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.name}${c.subject ? " ("+c.subject+")" : ""}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error(err);
+    select.innerHTML = `<option value="">Error loading classes</option>`;
+  }
+}
+
+/* ============== FILTER LOGIC ============== */
+
+async function applyFilters() {
+  const classId = $("classSelect").value;
+  const query = ($("searchInput").value || "").trim().toLowerCase();
+  const dateFilter = $("dateFilter").value || null;
+  const container = $("resultsContainer");
+
+  if (!classId) {
+    container.innerHTML = `<div class="empty">Select a class to view attendance.</div>`;
+    $("resultsBadge").innerText = "Select a class";
+    return;
+  }
+
+  $("resultsBadge").innerText = "Loading...";
+  container.innerHTML = `<div class="empty">Loading attendance...</div>`;
+
+  try {
+    let records = attendanceCacheByClass[classId];
+    if (!records) {
+      records = await fetchAttendanceForClass(classId);
+      attendanceCacheByClass[classId] = records;
+    }
+
+    filteredRecords = records.filter(r => {
+      // date filter
+      if (dateFilter) {
+        const d = r.date || (r.timestamp ? formatDateISO(r.timestamp) : null);
+        if (d !== dateFilter) return false;
+      }
+      if (!query) return true;
+
+      const name = (r.studentName || r.name || "").toLowerCase();
+      const email = (r.studentEmail || r.email || "").toLowerCase();
+      const roll = (r.rollno || r.rollNo || "").toLowerCase();
+
+      return name.includes(query) || email.includes(query) || roll.includes(query);
+    });
+
+    renderResults(classId);
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="empty">Failed to load attendance for this class.</div>`;
+    $("resultsBadge").innerText = "Error";
+  }
+}
+
+function clearFilters() {
+  $("classSelect").value = "";
+  $("searchInput").value = "";
+  $("dateFilter").value = "";
+  filteredRecords = [];
+  $("resultsContainer").innerHTML = `<div class="empty">Select a class to view attendance.</div>`;
+  $("resultsBadge").innerText = "Select a class";
+}
+
+/* ============== RENDER RESULTS ============== */
+
+function renderResults(classId) {
+  const container = $("resultsContainer");
+
+  if (!attendanceCacheByClass[classId] || !attendanceCacheByClass[classId].length) {
+    container.innerHTML = `<div class="empty">No attendance records for this class yet.</div>`;
+    $("resultsBadge").innerText = "0 records";
+    return;
+  }
+
+  if (!filteredRecords.length) {
+    container.innerHTML = `<div class="empty">No students match the search / date filter.</div>`;
+    $("resultsBadge").innerText = "0 records";
+    return;
+  }
+
+  $("resultsBadge").innerText = `${filteredRecords.length} record${filteredRecords.length!==1?"s":""}`;
+
+  // Sort: latest date/time first
+  filteredRecords.sort((a,b) => {
+    const ta = a.timestamp || 0;
+    const tb = b.timestamp || 0;
+    return tb - ta;
+  });
+
+  container.innerHTML = "";
+  filteredRecords.forEach(rec => {
+    const name = rec.studentName || rec.name || "Unknown Student";
+    const email = rec.studentEmail || rec.email || "";
+    const roll  = rec.rollno || rec.rollNo || "";
+    const status = (rec.status || "Present").toLowerCase();
+    const timeStr = rec.time || (rec.timestamp ? formatTime(rec.timestamp) : "");
+    const dateStr = rec.date || (rec.timestamp ? formatDateISO(rec.timestamp) : "");
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    row.innerHTML = `
+      <div class="row-left">
+        <div class="avatar">${escapeHtml(name[0] || "?")}</div>
+        <div>
+          <div class="row-main">${escapeHtml(name)}</div>
+          <div class="row-sub">
+            ${roll ? escapeHtml(roll) + " • " : ""}${escapeHtml(email)}
+          </div>
+        </div>
+      </div>
+      <div class="row-right">
+        <div>
+          <span class="status-pill ${status === "present" ? "status-present" : "status-absent"}">
+            ${status === "present" ? "Present" : "Absent"}
+          </span>
+        </div>
+        <div style="margin-top:4px;font-size:11px;color:var(--muted);">
+          ${escapeHtml(dateStr)} ${timeStr ? "• " + escapeHtml(timeStr) : ""}
+        </div>
+      </div>
+    `;
+
+    row.onclick = () => openDetail(rec);
+    container.appendChild(row);
+  });
+}
+
+/* ============== DETAIL MODAL ============== */
+
+function openDetail(rec) {
+  const name = rec.studentName || rec.name || "Student";
+  const email = rec.studentEmail || rec.email || "";
+  const roll  = rec.rollno || rec.rollNo || "";
+  const cid   = rec.classId || rec.classID || "";
+  const cname = rec.className || "";
+  const subj  = rec.subject || "";
+  const status = rec.status || "Present";
+  const timeStr = rec.time || (rec.timestamp ? formatTime(rec.timestamp) : "");
+  const dateStr = rec.date || (rec.timestamp ? formatDateISO(rec.timestamp) : "");
+  const distance = rec.distanceMeters ?? rec.distance;
+  const loc = rec.studentLocation || {};
+  const device = rec.device || "Unknown";
+
+  $("detailTitle").innerText = name;
+
+  const lines = [];
+  if (email) lines.push(`<div><strong>Email:</strong> ${escapeHtml(email)}</div>`);
+  if (roll) lines.push(`<div><strong>Roll No:</strong> ${escapeHtml(roll)}</div>`);
+  if (cid) lines.push(`<div><strong>Class ID:</strong> ${escapeHtml(cid)}</div>`);
+  if (cname) lines.push(`<div><strong>Class:</strong> ${escapeHtml(cname)}</div>`);
+  if (subj) lines.push(`<div><strong>Subject:</strong> ${escapeHtml(subj)}</div>`);
+  if (dateStr) lines.push(`<div><strong>Date:</strong> ${escapeHtml(dateStr)}</div>`);
+  if (timeStr) lines.push(`<div><strong>Time:</strong> ${escapeHtml(timeStr)}</div>`);
+  lines.push(`<div><strong>Status:</strong> ${escapeHtml(status)}</div>`);
+  lines.push(`<div><strong>Device:</strong> ${escapeHtml(device)}</div>`);
+  if (distance != null) {
+    lines.push(`<div><strong>Distance:</strong> ${escapeHtml(String(distance))} m</div>`);
+  }
+  if (loc.lat != null && loc.lon != null) {
+    lines.push(`<div><strong>Location:</strong> ${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lon))}</div>`);
+  }
+
+  $("detailBody").innerHTML = lines.join("");
+  $("detailOverlay").style.display = "flex";
+}
+
+function closeDetail(e) {
+  if (e && e.target && e.target.id !== "detailOverlay") {
+    $("detailOverlay").style.display = "none";
+    return;
+  }
+  $("detailOverlay").style.display = "none";
+}
+
+/* ============== NAV / LOGOUT ============== */
+
+function goBack() {
+  window.location.href = "dashboard.html";
+}
+
+function logout() {
+  clearAuth();
+  window.location.href = "index.html";
+}
+
+/* ============== INIT ============== */
+
+$("classSelect").addEventListener("change", () => {
+  // Clear previous results when class changes; user must click Search
+  $("resultsContainer").innerHTML = `<div class="empty">Click "Search" to load attendance for this class.</div>`;
+  $("resultsBadge").innerText = "Awaiting search";
+});
+
+$("searchInput").addEventListener("keyup", e => {
+  if (e.key === "Enter") applyFilters();
+});
+
+loadClasses();
+</script>
+</body>
+</html>

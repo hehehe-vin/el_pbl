@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Attendance - Login/Signup</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #ffcc00, #ff6600);
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      transition: background 0.6s ease;
+    }
+
+    .main-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: row;
+      width: 95%;
+      max-width: 1350px;
+      gap: 50px;
+    }
+
+    .image-side {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      transition: all 0.8s ease;
+      opacity: 1;
+      transform: translateX(-30px);
+    }
+
+    .image-side img {
+      width: auto;
+      height: 80vh;
+      max-width: 100%;
+      object-fit: contain;
+      transition: opacity 0.8s ease, transform 0.6s ease, height 0.6s ease;
+      transform: scale(1) translateX(-10px);
+    }
+
+    /* student image scaling */
+    .student-img {
+      transform: scale(10) translateY(-60px);
+      height: 70vh !important;
+    }
+
+    .container {
+      flex: 1.2;
+      background: #fff;
+      border-radius: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      text-align: center;
+      padding: 50px;
+      position: relative;
+      transition: all 0.6s ease;
+    }
+
+    h1 {
+      color: #ff6600;
+      margin-bottom: 25px;
+      font-size: 2rem;
+      transition: color 0.5s ease;
+    }
+
+    input, select {
+      width: 90%;
+      padding: 14px;
+      margin: 12px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    button {
+      background: #ff6600;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #ffcc00;
+      color: #333;
+    }
+
+    .toggle {
+      color: #555;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 18px;
+    }
+
+    .fade {
+      opacity: 0;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .error {
+      color: #e74c3c;
+    }
+
+    .success {
+      color: #27ae60;
+    }
+
+    @media (max-width: 768px) {
+      .main-wrapper {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .image-side img {
+        height: 45vh;
+        transform: scale(1) translateX(0);
+      }
+
+      .student-img {
+        transform: scale(1.5);
+        height: 50vh !important;
+      }
+
+      .container {
+        width: 90%;
+        padding: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-wrapper" id="mainWrapper">
+    <div class="image-side" id="imageSide">
+      <img id="roleImage" src="teacher_nobg.png" alt="Role Image">
+    </div>
+
+    <div class="container" id="authContainer">
+      <h1 id="formTitle">Teacher Login</h1>
+      <select id="roleSelect" onchange="changeTheme()">
+        <option value="teacher">Teacher</option>
+        <option value="student">Student</option>
+      </select>
+
+      <!-- Signup Form -->
+      <div id="signupForm" style="display:none;">
+        <input type="text" id="signupName" placeholder="Full Name">
+        <input type="email" id="signupEmail" placeholder="Email">
+        <input type="password" id="signupPassword" placeholder="Password">
+        <button onclick="signup()">Sign Up</button>
+        <div id="signupMessage" class="message"></div>
+        <div class="toggle" onclick="toggleForm('login')">Already have an account? Login</div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div id="loginMessage" class="message"></div>
+        <div class="toggle" onclick="toggleForm('signup')">Don’t have an account? Sign Up</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth helpers (apiFetch/saveAuth etc.) -->
+  <script src="auth.js"></script>
+
+  <script>
+  // --------------------------
+  // SMALL HELPERS
+  // --------------------------
+  function showMessage(elementId, message, type) {
+    const msgDiv = document.getElementById(elementId);
+    msgDiv.textContent = message;
+    msgDiv.className = `message ${type}`;
+  }
+
+  function toggleForm(form) {
+    document.getElementById('signupMessage').textContent = '';
+    document.getElementById('loginMessage').textContent = '';
+
+    if (form === 'signup') {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('signupForm').style.display = 'block';
+      const role = document.getElementById('roleSelect').value;
+      document.getElementById('formTitle').innerText =
+        role === 'student' ? 'Student Sign Up' : 'Teacher Sign Up';
+    } else {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('signupForm').style.display = 'none';
+      const role = document.getElementById('roleSelect').value;
+      document.getElementById('formTitle').innerText =
+        role === 'student' ? 'Student Login' : 'Teacher Login';
+    }
+  }
+
+  // Unified API caller: uses apiFetch from auth.js if available, else raw fetch
+  function callApi(path, options = {}) {
+    if (typeof apiFetch === "function") {
+      return apiFetch(path, options);
+    }
+    const base = window.location.origin.replace(/\/$/, "") + "/api";
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    };
+    return fetch(base + path, { ...options, headers });
+  }
+
+  // Store auth in a way compatible with different saveAuth implementations
+  function storeAuthFromBackend(data) {
+    // data: { token, email, role, name? }
+    if (!data) return;
+
+    const authObj = {
+      token: data.token,
+      email: data.email,
+      role: data.role,
+      name: data.name || ""
+    };
+
+    if (typeof saveAuth === "function") {
+      try {
+        // Preferred: saveAuth(obj)
+        saveAuth(authObj);
+      } catch (e) {
+        // Fallback: old signature saveAuth(token, role, email)
+        try { saveAuth(data.token, data.role, data.email); } catch (_) {}
+      }
+    } else {
+      localStorage.setItem("auth", JSON.stringify(authObj));
+    }
+  }
+
+  // --------------------------
+  // SIGNUP → backend /api/auth/signup
+  // --------------------------
+  async function signup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const role = document.getElementById('roleSelect').value;
+
+  if (!name || !email || !password) {
+    showMessage('signupMessage', 'Please fill in all fields.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, role })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage('signupMessage', data.error || 'Signup failed.', 'error');
+      return;
+    }
+
+    showMessage('signupMessage', 'Signup successful! Please login.', 'success');
+    setTimeout(() => toggleForm('login'), 1200);
+  } catch (err) {
+    console.error(err);
+    showMessage('signupMessage', 'Network error. Please try again.', 'error');
+  }
+}
+
+
+  // --------------------------
+  // LOGIN → backend /api/auth/login
+  // --------------------------
+  // --------------------------
+// LOGIN → backend /api/auth/login
+// --------------------------
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const selectedRole = document.getElementById('roleSelect').value;
+
+  if (!email || !password) {
+    showMessage('loginMessage', 'Please enter both email and password.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      // backend will send { error: "..." } on failures
+      showMessage('loginMessage', data.error || 'Login failed.', 'error');
+      return;
+    }
+
+    // data is exactly: { email, name, role, token }
+    const backendRole = data.role || 'student';
+
+    // If dropdown role doesn't match actual role, warn user
+    if (selectedRole !== backendRole) {
+      showMessage(
+        'loginMessage',
+        `You are registered as a ${backendRole}. Please switch the role toggle.`,
+        'error'
+      );
+      return;
+    }
+
+    // Build auth object and store it
+    const authObj = {
+      token: data.token,
+      email: data.email,
+      role: backendRole,
+      name: data.name || email.split("@")[0]
+    };
+
+    // Save so dashboard/auth.js can read it
+    localStorage.setItem("auth", JSON.stringify(authObj));
+
+    // Also keep a simple profile keyed by email (for dashboard profile UI)
+    const profile = {
+      name: authObj.name,
+      email: authObj.email,
+      role: authObj.role
+    };
+    localStorage.setItem(authObj.email, JSON.stringify(profile));
+
+    showMessage('loginMessage', 'Welcome! Redirecting...', 'success');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 1000);
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    showMessage('loginMessage', 'Network error. Please try again.', 'error');
+  }
+}
+
+
+  // --------------------------
+  // THEME HANDLING
+  // --------------------------
+  function changeTheme() {
+    const role = document.getElementById('roleSelect').value;
+    const container = document.querySelector('body');
+    const formTitle = document.getElementById('formTitle');
+    const mainWrapper = document.getElementById('mainWrapper');
+    const imageSide = document.getElementById('imageSide');
+    const roleImage = document.getElementById('roleImage');
+
+    imageSide.classList.add('fade');
+    setTimeout(() => {
+      if (role === 'student') {
+        container.style.background = 'linear-gradient(135deg, #ff4d4d, #ffffff)';
+        formTitle.style.color = '#ff4d4d';
+        formTitle.innerText = (document.getElementById('signupForm').style.display === 'block')
+          ? 'Student Sign Up' : 'Student Login';
+        roleImage.src = 'student_nobg.png';
+        mainWrapper.style.flexDirection = 'row-reverse';
+        roleImage.classList.add('student-img');
+      } else {
+        container.style.background = 'linear-gradient(135deg, #ffcc00, #ff6600)';
+        formTitle.style.color = '#ff6600';
+        formTitle.innerText = (document.getElementById('signupForm').style.display === 'block')
+          ? 'Teacher Sign Up' : 'Teacher Login';
+        roleImage.src = 'teacher_nobg.png';
+        mainWrapper.style.flexDirection = 'row';
+        roleImage.classList.remove('student-img');
+      }
+      imageSide.classList.remove('fade');
+    }, 300);
+  }
+
+  window.onload = function () {
+    changeTheme();
+  };
+  </script>
+</body>
+</html>

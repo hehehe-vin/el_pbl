@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Schedule & Attendance - Smart Attendance</title>
+<style>
+  :root {
+    --bg1: #ffcc00;
+    --bg2: #ff6600;
+    --card-bg: #fff;
+    --muted: #666;
+  }
+  body {
+    margin:0;
+    font-family: 'Poppins', sans-serif;
+    min-height:100vh;
+    background: linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:36px 16px;
+    box-sizing:border-box;
+  }
+
+  .app {
+    width:100%;
+    max-width:1100px;
+    background: rgba(255,255,255,0.95);
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.18);
+    padding:18px;
+    box-sizing:border-box;
+  }
+
+  header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  header h1 {
+    margin:0;
+    font-size:20px;
+    color:#222;
+  }
+  header .controls { display:flex; gap:8px; align-items:center; }
+
+  .left-controls { display:flex; gap:8px; align-items:center; }
+
+  .search-input {
+    padding:8px 12px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,0.09);
+    width:260px;
+    box-sizing:border-box;
+  }
+
+  .btn {
+    padding:10px 14px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary { background: linear-gradient(135deg,#ff8800,#ff5500); color:white; }
+  .btn.ghost { background:transparent; border:1px solid rgba(0,0,0,0.08); color:#222; }
+
+  .layout {
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:18px;
+    margin-top:16px;
+  }
+
+  .left {
+    max-height:90vh;
+    overflow:auto;
+    padding-right:6px;
+    overflow: visible;
+  }
+
+  .class-card {
+    position:relative;
+    background:var(--card-bg);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.08);
+    cursor:pointer;
+    transition:transform .14s, box-shadow .14s;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    overflow: visible !important;
+  }
+  .class-card:hover { transform:translateY(-4px); box-shadow:0 10px 26px rgba(0,0,0,0.12); }
+
+  .class-info { text-align:left; flex:1; }
+  .class-info h3 { margin:0; font-size:16px; color:#222; }
+  .class-info p { margin:6px 0 0 0; font-size:13px; color:var(--muted); }
+
+  .class-meta { text-align:right; font-size:12px; color:var(--muted); }
+
+  /* 3-dots button + menu */
+  .dots-btn {
+    width:36px; height:36px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;
+    background:transparent; border:none; cursor:pointer; color:#666; font-weight:700;
+  }
+  .dots-menu {
+    position:absolute;
+    right:12px;
+    top:48px;
+    background:white;
+    border-radius:10px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.12);
+    overflow:hidden;
+    transform-origin: top right;
+    transform: scaleY(0);
+    transition: transform 0.14s ease;
+    z-index:900;
+    min-width:150px;
+  }
+  .dots-menu.show { transform: scaleY(1); }
+  .dots-menu button {
+    display:block;
+    width:100%;
+    padding:10px 12px;
+    border:none;
+    background:transparent;
+    text-align:left;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .dots-menu button:hover { background: #fff7e6; }
+
+  .right {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.98));
+    border-radius:12px;
+    padding:14px;
+    min-height:70vh;
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+    margin-top: 30px;
+  }
+
+  .section-title { margin:0 0 8px 0; font-size:15px; color:#222; display:flex; justify-content:space-between; align-items:center; }
+  .dates-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+
+  .date-chip {
+    background:#fff7e6;
+    padding:8px 12px;
+    border-radius:999px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.04);
+    cursor:pointer;
+    font-weight:600;
+  }
+  .date-chip.active { background: linear-gradient(135deg,#ffcc88,#ff9900); color:white; }
+
+  .students-area { margin-top:14px; }
+
+  .student-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px;
+    border-radius:10px;
+    background:white;
+    margin-bottom:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.04);
+    cursor:pointer;
+  }
+
+  .student-row .left { display:flex; gap:12px; align-items:center; }
+
+  .avatar {
+    width:44px;height:44px;border-radius:50%;
+    background:linear-gradient(135deg,#ffd580,#ff8800);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700;
+  }
+  .student-meta { font-size:13px; color:#222; }
+  .student-sub { font-size:12px; color:var(--muted); }
+
+  .empty {
+    padding:28px;
+    text-align:center;
+    color:var(--muted);
+  }
+
+  /* modal */
+  .modal-overlay {
+    position:fixed; left:0; top:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:12000;
+  }
+  .modal {
+    width:460px;
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin:0 0 8px 0; }
+
+  footer { margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+  .small { font-size:12px;color:var(--muted); }
+
+  @media (max-width:900px) {
+    .layout { grid-template-columns: 1fr; }
+    .left { max-height:220px; }
+  }
+  .class-card.dimmed {
+    opacity: 0.35;
+    filter: blur(1px);
+    pointer-events: none;
+  }
+</style>
+
+<!-- auth helper for JWT + apiFetch -->
+<script src="auth.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <h1>📘 Schedule & Attendance</h1>
+      <input id="searchBox" class="search-input" placeholder="Search classes (name / subject)"/>
+    </div>
+
+    <div class="controls">
+      <div class="left-controls">
+        <button class="btn ghost" onclick="goBack()">⬅ Back</button>
+        <button class="btn primary" onclick="openRegisterClass()">Register Class</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout" style="margin-top:16px;">
+    <div class="left">
+      <h2 style="font-size:14px;margin:10px 0 12px 0;color:#222;">Your Classes</h2>
+      <div id="classesList"></div>
+    </div>
+
+    <div class="right">
+      <div id="rightContent">
+        <p class="section-title">Select a class to see dates</p>
+        <div id="datesContainer" style="min-height:40px;"></div>
+
+        <div style="margin-top:12px;">
+          <p class="section-title">Students 
+            <span id="selectedClassLabel" style="font-size:12px;color:var(--muted)"></span>
+          </p>
+          <div id="studentsContainer">
+            <div class="empty">Select a class and a date to view attendance.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="small">Logged in as: <strong id="teacherEmailSmall"></strong></div>
+  </footer>
+</div>
+
+<!-- Register/Edit Class Modal -->
+<div id="registerModal" class="modal-overlay" onclick="closeRegisterModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="registerTitle">Register New Class</h3>
+
+    <label>Class Name</label>
+    <input id="classNameInput" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;margin-top:6px;">
+
+    <label style="margin-top:12px;display:block;">Subject</label>
+    <input id="classSubjectInput" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;margin-top:6px;">
+
+    <div style="text-align:right;margin-top:16px;">
+      <button class="btn ghost" onclick="closeRegisterModal()">Cancel</button>
+      <button class="btn primary" id="saveClassBtn" onclick="saveNewClass()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-overlay" onclick="closeDeleteModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Delete Class</h3>
+    <p id="deleteMsg">Are you sure you want to delete this class? This may also delete attendance records for this class.</p>
+    <div style="margin-top:12px;text-align:right;">
+      <button class="btn ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn primary" onclick="confirmDeleteClass()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Student detail modal -->
+<div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modalCard" onclick="event.stopPropagation()">
+    <h3 id="modalName">Student Name</h3>
+    <div id="modalDetails"></div>
+    <div style="text-align:right; margin-top:12px;">
+      <button class="btn ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+   Utilities & formatting
+----------------------------*/
+function $(id){ return document.getElementById(id); }
+function formatDateISO(ts){
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(ts){ return new Date(ts).toLocaleTimeString(); }
+function downloadBlob(filename, blob){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function escapeHtml(s){
+  if(!s && s!==0) return '';
+  return String(s).replace(/[&<>"'`]/g, function(m){ 
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'})[m]; 
+  });
+}
+
+/* ---------------------------
+   Auth (teacher only)
+----------------------------*/
+const auth = getAuth();
+if (!auth || auth.role !== "teacher") {
+  window.location.href = "index.html";
+}
+const teacherEmail = auth.email;
+$("teacherEmailSmall").innerText = teacherEmail;
+
+/* ---------------------------
+   State
+----------------------------*/
+let classesCache = [];
+let editingClassId = null;
+let classToDelete = null;
+let currentClassID = null;
+
+// attendanceByClass[classId] = [records...]
+const attendanceByClass = {};
+
+/* ---------------------------
+   CLASSES API HELPERS
+----------------------------*/
+
+// GET /api/classes/  → list of teacher's classes
+async function fetchClasses() {
+  const res = await apiFetch("/classes/");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to load classes");
+  }
+  return await res.json();
+}
+
+// POST /api/classes/ → create new class
+async function createClass(name, subject) {
+  const res = await apiFetch("/classes/", {
+    method: "POST",
+    body: JSON.stringify({ name, subject })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to create class");
+  }
+  return data;
+}
+
+// PUT /api/classes/<id> → update existing class
+async function updateClass(id, name, subject) {
+  const res = await apiFetch(`/classes/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ name, subject })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to update class");
+  }
+  return data;
+}
+
+// DELETE /api/classes/<id>
+async function deleteClassBackend(id) {
+  const res = await apiFetch(`/classes/${id}`, {
+    method: "DELETE"
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete class");
+  }
+  return data;
+}
+
+/* ---------------------------
+   ATTENDANCE API HELPERS
+----------------------------*/
+
+// GET /api/attendance/class/<classId>[?date=YYYY-MM-DD]
+async function fetchAttendanceForClass(classId, dateFilter) {
+  let url = `/attendance/class/${encodeURIComponent(classId)}`;
+  if (dateFilter) {
+    url += `?date=${encodeURIComponent(dateFilter)}`;
+  }
+  const res = await apiFetch(url);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to load attendance");
+  }
+  return await res.json();
+}
+
+/* ---------------------------
+   Load & Render Classes (with search)
+----------------------------*/
+async function loadClasses(){
+  const container = $("classesList");
+  container.innerHTML = `<div class="empty">Loading classes...</div>`;
+  try {
+    classesCache = await fetchClasses();
+    renderClassCards();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="empty">Failed to load classes from server.</div>`;
+  }
+}
+
+function renderClassCards(){
+  const container = $("classesList");
+  const q = ($("searchBox").value || "").trim().toLowerCase();
+  container.innerHTML = "";
+
+  if(classesCache.length === 0){
+    container.innerHTML = `<div class="empty">No classes registered yet.</div>`;
+    return;
+  }
+
+  const filtered = classesCache.filter(c=>{
+    if(!q) return true;
+    return (c.name || "").toLowerCase().includes(q) ||
+           (c.subject || "").toLowerCase().includes(q) ||
+           (c.id||"").toLowerCase().includes(q);
+  });
+
+  if(filtered.length === 0){
+    container.innerHTML = `<div class="empty">No classes match "${escapeHtml(q)}"</div>`;
+    return;
+  }
+
+  filtered.forEach(c=>{
+    const card = document.createElement("div");
+    card.className = "class-card";
+
+    const created = c.createdAt || c.createdOn;
+    const createdText = created ? new Date(created).toLocaleDateString() : "";
+
+    card.innerHTML = `
+      <div class="class-info">
+        <h3>${escapeHtml(c.name)}</h3>
+        <p>${escapeHtml(c.subject)}</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="class-meta" style="text-align:right;">
+          <div style="font-weight:700;">${escapeHtml(c.id)}</div>
+          <div style="font-size:12px;margin-top:6px;color:var(--muted)">${createdText}</div>
+        </div>
+        <button class="dots-btn" title="Options" onclick="toggleClassMenu(event,'${escapeForAttr(c.id)}')">⋮</button>
+      </div>
+
+      <div id="menu_${escapeForId(c.id)}" class="dots-menu" aria-hidden="true">
+        <button onclick="onEditClass('${escapeForAttr(c.id)}')">Edit Class</button>
+        <button onclick="onDeleteClass('${escapeForAttr(c.id)}')">Delete Class</button>
+        <button onclick="exportClassCSV('${escapeForAttr(c.id)}')">Export CSV</button>
+        <button onclick="exportClassJSON('${escapeForAttr(c.id)}')">Export JSON</button>
+      </div>
+    `;
+    // clicking whole card opens class (but clicking menu button stops propagation)
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.dots-menu') || e.target.closest('.dots-btn')) return;
+      openClass(c.id);
+    });
+    container.appendChild(card);
+  });
+}
+
+/* helpers to escape id strings safely */
+function escapeForId(s){
+  return String(s).replace(/[^a-z0-9\-_]/gi, '_');
+}
+function escapeForAttr(s){
+  return String(s).replace(/'/g, "\\'");
+}
+
+/* ---------------------------
+   Dots menu handling
+----------------------------*/
+let openMenuId = null;
+function toggleClassMenu(ev, classId){
+  ev.stopPropagation();
+  const menu = $("menu_" + escapeForId(classId));
+  if(!menu) return;
+
+  if (menu.classList.contains('show')) {
+    closeOpenMenu();
+    return;
+  }
+
+  closeOpenMenu();
+  menu.classList.add('show');
+  menu.setAttribute('aria-hidden','false');
+  openMenuId = menu.id;
+
+  setTimeout(()=>{ document.addEventListener('click', outsideMenuClick); }, 10);
+}
+
+function closeOpenMenu(){
+  if(openMenuId){
+    const m = $(openMenuId);
+    if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+    openMenuId = null;
+    document.removeEventListener('click', outsideMenuClick);
+  }
+}
+function outsideMenuClick(e){
+  if(!e.target.closest('.dots-menu') && !e.target.closest('.dots-btn')) closeOpenMenu();
+}
+
+/* ---------------------------
+   Register / Edit class modal
+----------------------------*/
+function openRegisterClass(){
+  editingClassId = null;
+  $("registerTitle").innerText = "Register New Class";
+  $("classNameInput").value = "";
+  $("classSubjectInput").value = "";
+  $("registerModal").style.display = "flex";
+}
+
+function closeRegisterModal(e){
+  if(e && e.target && e.target.id !== "registerModal") return;
+  $("registerModal").style.display = "none";
+  editingClassId = null;
+}
+
+function onEditClass(classId){
+  closeOpenMenu();
+  const obj = classesCache.find(x=>x.id === classId);
+  if(!obj) { alert("Class not found."); return; }
+  editingClassId = classId;
+  $("registerTitle").innerText = "Edit Class";
+  $("classNameInput").value = obj.name || "";
+  $("classSubjectInput").value = obj.subject || "";
+  $("registerModal").style.display = "flex";
+}
+
+async function saveNewClass(){
+  const name = $("classNameInput").value.trim();
+  const subject = $("classSubjectInput").value.trim();
+  if(!name || !subject){ alert("Please fill both fields."); return; }
+
+  try {
+    if(editingClassId){
+      await updateClass(editingClassId, name, subject);
+    } else {
+      await createClass(name, subject);
+    }
+    $("registerModal").style.display = "none";
+    editingClassId = null;
+    await loadClasses();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to save class: " + err.message);
+  }
+}
+
+/* ---------------------------
+   Delete class flow
+----------------------------*/
+function onDeleteClass(classId){
+  closeOpenMenu();
+  classToDelete = classId;
+  $("deleteMsg").innerText = "Are you sure you want to delete this class? This may also delete attendance records for this class.";
+  $("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal(e){
+  if(e && e.target && e.target.id !== "deleteModal") return;
+  $("deleteModal").style.display = "none";
+  classToDelete = null;
+}
+
+async function confirmDeleteClass(){
+  if(!classToDelete) return;
+
+  try {
+    await deleteClassBackend(classToDelete);
+
+    // clear cached attendance for this class
+    delete attendanceByClass[classToDelete];
+
+    classToDelete = null;
+    $("deleteModal").style.display = "none";
+    await loadClasses();
+
+    // clear right panel if it belonged to deleted class
+    $("datesContainer").innerHTML = "";
+    $("studentsContainer").innerHTML = `<div class="empty">Select a class and a date to view attendance.</div>`;
+    $("selectedClassLabel").innerText = "";
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete class: " + err.message);
+  }
+}
+
+/* ---------------------------
+   Class open / dates / students
+----------------------------*/
+async function openClass(id) {
+  // deselect if clicking same
+  if (currentClassID === id) {
+    currentClassID = null;
+    document.querySelectorAll(".class-card").forEach(c=> c.classList.remove("dimmed"));
+    $("datesContainer").innerHTML = "";
+    $("studentsContainer").innerHTML = `<div class="empty">Select a class and a date to view attendance.</div>`;
+    $("selectedClassLabel").innerText = "";
+    closeOpenMenu();
+    return;
+  }
+
+  currentClassID = id;
+  $("selectedClassLabel").innerText = "";
+
+  // dim cards except chosen
+  document.querySelectorAll(".class-card").forEach(c=>{
+    const metaDiv = c.querySelector(".class-meta div");
+    const cid = metaDiv ? metaDiv.innerText.trim() : "";
+    if (cid !== id) c.classList.add("dimmed");
+    else c.classList.remove("dimmed");
+  });
+
+  $("datesContainer").innerHTML = `<div class="empty">Loading attendance...</div>`;
+  $("studentsContainer").innerHTML = `<div class="empty">Select a date to view students.</div>`;
+
+  try {
+    const records = await fetchAttendanceForClass(id);
+    attendanceByClass[id] = records;
+    if (!records.length) {
+      $("datesContainer").innerHTML = `<div class="empty">No attendance records for this class.</div>`;
+      $("studentsContainer").innerHTML = `<div class="empty">No attendance yet.</div>`;
+      return;
+    }
+    renderDates(id);
+  } catch (err) {
+    console.error(err);
+    $("datesContainer").innerHTML = `<div class="empty">Failed to load attendance for this class.</div>`;
+  }
+}
+
+function renderDates(id){
+  const arr = attendanceByClass[id] || [];
+  const box = $("datesContainer");
+  if(arr.length === 0){
+    box.innerHTML = `<div class="empty">No attendance records for this class.</div>`;
+    return;
+  }
+
+  const map = {};
+  arr.forEach(r=>{
+    const d = r.date || (r.timestamp ? formatDateISO(r.timestamp) : null);
+    if(!d) return;
+    if(!map[d]) map[d] = [];
+    map[d].push(r);
+  });
+  const dates = Object.keys(map).sort((a,b)=> b.localeCompare(a));
+  box.innerHTML = "";
+  dates.forEach(d=>{
+    const el = document.createElement("div");
+    el.className = "date-chip";
+    el.innerText = `${d} (${map[d].length})`;
+    el.onclick = ()=> selectDate(id, d);
+    box.appendChild(el);
+  });
+}
+
+async function selectDate(id, date){
+  // if we want to filter server-side for huge data we could call again:
+  // const records = await fetchAttendanceForClass(id, date);
+  // but for now use cached data and only filter client-side
+  const arr = attendanceByClass[id] || [];
+  document.querySelectorAll(".date-chip").forEach(c=>{
+    c.classList.toggle("active", c.innerText.startsWith(date));
+  });
+
+  const list = arr.filter(r => {
+    const d = r.date || (r.timestamp ? formatDateISO(r.timestamp) : null);
+    return d === date;
+  });
+
+  if(list.length === 0){
+    $("studentsContainer").innerHTML = `<div class="empty">No students present this day.</div>`;
+    return;
+  }
+
+  list.sort((a,b)=> (a.studentName||"").localeCompare(b.studentName||""));
+  const box = $("studentsContainer");
+  box.innerHTML = "";
+  list.forEach(rec=>{
+    const name = rec.studentName || rec.name || "Unknown";
+    const initials = name.split(" ").map(n=>n[0]).join("").toUpperCase();
+    const email = rec.studentEmail || rec.email || "";
+    const roll = rec.rollno || rec.rollNo || "";
+
+    const timeStr = rec.time || (rec.timestamp ? formatTime(rec.timestamp) : "");
+    const status = rec.status || "Present";
+
+    const row = document.createElement("div");
+    row.className = "student-row";
+    row.innerHTML = `
+      <div class="left">
+        <div class="avatar">${escapeHtml(initials)}</div>
+        <div>
+          <div class="student-meta">${escapeHtml(name)}</div>
+          <div class="student-sub">
+            ${escapeHtml(email)}${roll ? ' • ' + escapeHtml(roll) : ''}
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700">${escapeHtml(status)}</div>
+        <div style="font-size:12px;margin-top:6px;">${escapeHtml(timeStr)}</div>
+      </div>
+    `;
+    row.onclick = ()=> openDetail(rec);
+    box.appendChild(row);
+  });
+
+  const cls = classesCache.find(c => c.id === id);
+  $("selectedClassLabel").innerText = cls ? `${cls.name} • ${date}` : date;
+}
+
+/* ---------------------------
+   Student detail modal
+----------------------------*/
+function openDetail(r){
+  $("modalName").innerText = r.studentName || r.name || "Student";
+  const d = [];
+  const timeStr = r.time || (r.timestamp ? formatTime(r.timestamp) : "");
+  const dateStr = r.date || (r.timestamp ? formatDateISO(r.timestamp) : "");
+  const email = r.studentEmail || r.email || "";
+  const roll = r.rollno || r.rollNo || "";
+  const distance = r.distanceMeters ?? r.distance;
+  const loc = r.studentLocation || {};
+
+  d.push(`<div><strong>Status:</strong> ${escapeHtml(r.status||"Present")}</div>`);
+  if(timeStr) d.push(`<div><strong>Time:</strong> ${escapeHtml(timeStr)}</div>`);
+  if(dateStr) d.push(`<div><strong>Date:</strong> ${escapeHtml(dateStr)}</div>`);
+  if(email) d.push(`<div><strong>Email:</strong> ${escapeHtml(email)}</div>`);
+  if(roll) d.push(`<div><strong>Roll No:</strong> ${escapeHtml(roll)}</div>`);
+  if(r.device) d.push(`<div><strong>Device:</strong> ${escapeHtml(r.device)}</div>`);
+  if(distance !== undefined) d.push(`<div><strong>Distance:</strong> ${escapeHtml(String(distance))} m</div>`);
+  if(loc.lat != null && loc.lon != null) {
+    d.push(`<div><strong>Location:</strong> ${escapeHtml(String(loc.lat))}, ${escapeHtml(String(loc.lon))}</div>`);
+  }
+  if(r.className) d.push(`<div><strong>Class:</strong> ${escapeHtml(r.className)}${r.subject ? ' ('+escapeHtml(r.subject)+')' : ''}</div>`);
+
+  $("modalDetails").innerHTML = d.join("<br>");
+  $("modalOverlay").style.display = "flex";
+}
+function closeModal(e){
+  if(e && e.target && e.target.id !== "modalOverlay") return;
+  $("modalOverlay").style.display = "none";
+}
+
+/* ---------------------------
+   Export functions
+----------------------------*/
+async function exportClassJSON(classId){
+  try {
+    const arr = attendanceByClass[classId] || await fetchAttendanceForClass(classId);
+    const blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
+    downloadBlob(`${classId}_attendance.json`, blob);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to export JSON: " + err.message);
+  }
+}
+
+async function exportClassCSV(classId){
+  try {
+    const arr = attendanceByClass[classId] || await fetchAttendanceForClass(classId);
+    if(!arr.length){
+      alert("No attendance to export for this class.");
+      return;
+    }
+
+    const headers = [
+      "studentName","studentEmail","rollno",
+      "time","date","timestamp","status",
+      "distanceMeters","device","lat","lon",
+      "classId","className","subject"
+    ];
+
+    const lines = [];
+    lines.push(headers.join(","));
+    arr.forEach(r=>{
+      const loc = r.studentLocation || {};
+      const row = headers.map(h=>{
+        let v = "";
+        if(h === "lat") v = loc.lat ?? "";
+        else if(h === "lon") v = loc.lon ?? "";
+        else if(h === "rollno") v = r.rollno || r.rollNo || "";
+        else if(h === "classId") v = r.classId || r.classID || "";
+        else if(h === "distanceMeters") v = r.distanceMeters ?? r.distance ?? "";
+        else v = r[h] !== undefined ? String(r[h]) : "";
+        if(v && v.indexOf(",") !== -1) v = `"${v.replace(/"/g,'""')}"`;
+        return v;
+      });
+      lines.push(row.join(","));
+    });
+
+    const csv = lines.join("\n");
+    const blob = new Blob([csv], {type:'text/csv'});
+    downloadBlob(`${classId}_attendance.csv`, blob);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to export CSV: " + err.message);
+  }
+}
+
+/* ---------------------------
+   Search box handling
+----------------------------*/
+$("searchBox").addEventListener('input', ()=>{
+  renderClassCards();
+});
+
+/* ---------------------------
+   Init
+----------------------------*/
+loadClasses();
+
+/* close any open menu when resizing or scrolling */
+window.addEventListener('resize', closeOpenMenu);
+window.addEventListener('scroll', closeOpenMenu);
+
+function goBack(){ location.href = "dashboard.html"; }
+
+</script>
+</body>
+</html>

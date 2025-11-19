@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - Smart Attendance</title>
+
+  <style>
+    /* ================================
+       GLOBAL + LAYOUT
+    ==================================*/
+    html, body {
+      width: 100vw;
+      max-width: 100vw;
+      min-width: 100vw;
+      overflow-x: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #ffcc00, #ff6600) !important;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #ffcc00, #ff6600) !important;
+      background-attachment: fixed;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    .dashboard-wrapper {
+      display: flex;
+      width: 100vw;
+      max-width: 1200px;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    /* ================================
+       PROFILE BOX
+    ==================================*/
+    .profile-box {
+      flex: 0.6;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      transition: 0.45s;
+      background: #fff;
+    }
+
+    .profile-teacher {
+      background: linear-gradient(135deg,#fff4cc,#ffe680);
+      box-shadow: 0 0 25px rgba(255,165,0,0.35);
+    }
+
+    .profile-student {
+      background: linear-gradient(135deg,#ffe6e6,#ffb3b3);
+      box-shadow: 0 0 25px rgba(255,77,77,0.35);
+    }
+
+    .profile-box img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ccc;
+      cursor: pointer;
+      transition: transform 0.28s;
+    }
+
+    .profile-box img:hover { transform: scale(1.05); }
+
+    .hover-text {
+      position: absolute;
+      top: 145px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #555;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .profile-box:hover .hover-text { opacity: 1; }
+
+    select, input[type="text"], input[type="number"] {
+      width: 90%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      font-family: inherit;
+    }
+
+    .save-btn {
+      margin-top: 10px;
+      padding: 8px 18px;
+      background: linear-gradient(135deg,#0077ff,#66b3ff);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* ================================
+       DASHBOARD CONTAINER
+    ==================================*/
+    .container {
+      flex: 1.2;
+      border-radius: 20px;
+      text-align: center;
+      padding: 26px;
+      max-width: 100vw;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .teacher-dashboard {
+      background: rgba(255,204,0,0.2);
+    }
+
+    .student-dashboard {
+      background: rgba(255,77,77,0.2);
+    }
+
+    .teacher-area, .student-area {
+      border-radius: 15px;
+      padding: 22px;
+      margin-top: 18px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.25);
+    }
+
+    .teacher-area { background: rgba(255,165,0,0.35); }
+    .student-area { background: rgba(255,77,77,0.35); }
+
+    /* teacher inputs row */
+    .input-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      gap: 40px;
+      margin-bottom: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      width: 40%;
+      text-align: center;
+    }
+
+    .input-group label {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    /* camera div for Html5Qrcode */
+    #qrVideo {
+      width: 320px;
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 12px;
+      background: #000;
+    }
+
+    #qrCountdown {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* ================================
+       TOAST
+    ==================================*/
+    .toast-container {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 9999;
+    }
+
+    .toast {
+      min-width: 220px;
+      padding: 12px 14px;
+      color: #fff;
+      border-radius: 10px;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: 0.25s;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.teacher {
+      background: linear-gradient(135deg,#ff9900,#e65c00);
+    }
+
+    .toast.student {
+      background: linear-gradient(135deg,#ff6666,#e60000);
+    }
+
+    /* ================================
+       HAMBURGER + DRAWER
+    ==================================*/
+    .hamburger {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      width: 42px;
+      height: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    .hamburger span {
+      width: 100%;
+      height: 6px;
+      background: white;
+      border-radius: 6px;
+      transition: 0.35s;
+    }
+
+    .hamburger.active span {
+      background: #000 !important;
+    }
+
+    .hamburger.active span:nth-child(1) {
+      transform: translateY(13px) rotate(45deg);
+    }
+    .hamburger.active span:nth-child(2) {
+      transform: scaleX(0);
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: translateY(-13px) rotate(-45deg);
+    }
+
+    #drawer {
+      position: fixed;
+      top: 0;
+      right: -260px;
+      width: 260px;
+      height: 100vh;
+      background: #e0e0e0;
+      padding: 30px;
+      transition: 0.35s;
+      z-index: 6000;
+      box-shadow: -4px 0 15px rgba(0,0,0,0.25);
+    }
+
+    .drawer-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      background: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .drawer-btn:hover {
+      background: #ffd580;
+      transform: scale(1.03);
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      backdrop-filter: blur(5px);
+      background: rgba(0,0,0,0.25);
+      z-index: 5000;
+    }
+
+    /* ================================
+       CLASS POPUP
+    ==================================*/
+    #classPopupOverlay {
+      display:none;
+      position: fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #classPopupCard {
+      background:white;
+      width:320px;
+      max-width:90vw;
+      padding:25px;
+      border-radius:15px;
+      box-shadow:0 6px 25px rgba(0,0,0,0.3);
+      text-align:center;
+    }
+
+    #classSelect {
+      width:90%;
+      padding:10px;
+      border-radius:10px;
+      margin-top:12px;
+      border:1px solid #ccc;
+      font-family: inherit;
+    }
+
+    @media (max-width:900px) {
+      .dashboard-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+
+  <!-- auth helper -->
+  <script src="auth.js"></script>
+</head>
+<body>
+
+<!-- HAMBURGER -->
+<div class="hamburger" onclick="toggleDrawer()" id="hamburgerBtn">
+  <span></span><span></span><span></span>
+</div>
+
+<!-- DRAWER -->
+<div id="drawer">
+  <h2 style="color:#222;">Menu</h2>
+  <!-- buttons added dynamically -->
+</div>
+
+<div id="overlay" onclick="toggleDrawer()"></div>
+
+<!-- MAIN DASHBOARD -->
+<div class="dashboard-wrapper">
+
+  <!-- PROFILE BOX -->
+  <div id="profileBox" class="profile-box">
+    <img id="profilePic" src="default_profile.jpg" alt="Profile Picture">
+    <div class="hover-text">Click to upload your photo</div>
+    <input id="uploadPic" type="file" accept="image/*" style="display:none">
+    <h2 id="profileName">Loading...</h2>
+    <p id="profileEmail"></p>
+    <div id="extraFields"></div>
+    <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+  </div>
+
+  <!-- DASHBOARD CONTENT -->
+  <div id="dashboardContainer" class="container">
+    <h1 id="dashboardTitle">Loading...</h1>
+
+    <!-- TEACHER -->
+    <div id="teacherTools" class="teacher-area" style="display:none;">
+      <div class="input-row">
+        <div class="input-group">
+          <label for="distanceLimit">Distance (meters)</label>
+          <input id="distanceLimit" type="number" value="200">
+        </div>
+        <div class="input-group">
+          <label for="timeLimit">Validity (minutes)</label>
+          <input id="timeLimit" type="number" value="5">
+        </div>
+      </div>
+
+      <button id="generateQrBtn" class="save-btn" style="background:#ff8800;">
+        Generate QR
+      </button>
+
+      <div id="qrCode" style="margin-top:15px;"></div>
+      <div id="qrCountdown"></div>
+      <div id="qrExpired" style="display:none; font-weight:800; color:red;">EXPIRED</div>
+    </div>
+
+    <!-- STUDENT -->
+    <div id="studentTools" class="student-area" style="display:none;">
+      <button id="startCameraBtn" class="save-btn" style="background:#ff4444;">
+        Start Camera
+      </button>
+      <button id="stopCameraBtn" class="save-btn" style="background:#666; display:none;">
+        Stop
+      </button>
+      <div id="qrVideo" style="display:none;"></div>
+      <p id="scanResult" style="margin-top:12px;">Scan a QR code...</p>
+    </div>
+
+    <button class="save-btn"
+            style="margin-top:18px;background:linear-gradient(135deg,#444,#111);"
+            onclick="logout()">
+      Logout
+    </button>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- QR + CAMERA LIBRARIES -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.7/html5-qrcode.min.js"></script>
+
+<!-- CLASS POPUP HTML -->
+<div id="classPopupOverlay">
+  <div id="classPopupCard">
+    <h3>Select Class</h3>
+    <select id="classSelect"></select>
+
+    <button id="classPopupContinueBtn"
+      style="margin-top:20px; padding:10px 20px;
+             background:linear-gradient(135deg,#ff8800,#ff5500); 
+             border:none; border-radius:10px; color:white;
+             font-weight:600; cursor:pointer;">
+      Continue
+    </button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   SMALL HELPERS
+========================================================= */
+function $(id){ return document.getElementById(id); }
+
+function showToast(msg, role){
+  const c = $("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast " + (role || "teacher");
+  t.innerText = msg;
+  c.appendChild(t);
+  requestAnimationFrame(()=> t.classList.add("show"));
+  setTimeout(()=> {
+    t.classList.remove("show");
+    setTimeout(()=> t.remove(), 300);
+  }, 2500);
+}
+
+/* =========================================================
+   DRAWER
+========================================================= */
+function toggleDrawer(){
+  const drawer = $("drawer");
+  const overlay = $("overlay");
+  const btn = $("hamburgerBtn");
+  if(drawer.style.right === "0px"){
+    drawer.style.right = "-260px";
+    overlay.style.display = "none";
+    btn.classList.remove("active");
+  } else {
+    drawer.style.right = "0px";
+    overlay.style.display = "block";
+    btn.classList.add("active");
+  }
+}
+
+/* =========================================================
+   AUTH + PROFILE SETUP
+========================================================= */
+const auth = getAuth();
+if (!auth) {
+  window.location.href = "index.html";
+}
+
+const loggedInEmail = auth.email;
+const loggedInRole  = auth.role;
+
+let profile = (function(){
+  const key = "profile_" + loggedInEmail;
+  const existing = localStorage.getItem(key);
+  if (existing) {
+    try { return JSON.parse(existing); } catch { /* ignore */ }
+  }
+  return {
+    name: loggedInEmail.split("@")[0],
+    email: loggedInEmail,
+    role: loggedInRole
+  };
+})();
+
+function persistProfile(){
+  localStorage.setItem("profile_" + loggedInEmail, JSON.stringify(profile));
+}
+
+/* UI INIT */
+$("profileName").innerText  = profile.name || loggedInEmail.split("@")[0];
+$("profileEmail").innerText = profile.email || loggedInEmail;
+const extraFields = $("extraFields");
+const profileBox  = $("profileBox");
+const dash        = $("dashboardContainer");
+const teacherTools = $("teacherTools");
+const studentTools = $("studentTools");
+const dashboardTitle = $("dashboardTitle");
+const drawerEl    = $("drawer");
+
+if (loggedInRole === "teacher") {
+  teacherTools.style.display = "block";
+  profileBox.classList.add("profile-teacher");
+  dash.classList.add("teacher-dashboard");
+  dashboardTitle.innerText = "Teacher Dashboard";
+
+  extraFields.innerHTML = `
+    <select id="gender">
+      <option ${profile.gender === "Male" ? "selected" : ""}>Male</option>
+      <option ${profile.gender === "Female" ? "selected" : ""}>Female</option>
+    </select>
+    <input id="subject" type="text" placeholder="Subject" value="${profile.subject || ""}">
+  `;
+
+  drawerEl.innerHTML += `
+    <button class="drawer-btn" onclick="goToSchedule()">📘 Schedule Lectures</button>
+    <button class="drawer-btn" onclick="goToFind()">🔍 Search Student</button>
+  `;
+
+} else {
+  studentTools.style.display = "block";
+  profileBox.classList.add("profile-student");
+  dash.classList.add("student-dashboard");
+  dashboardTitle.innerText = "Student Dashboard";
+
+  extraFields.innerHTML = `
+    <input id="rollno" type="text" placeholder="Roll No" value="${profile.rollno || ""}">
+    <select id="gender">
+      <option ${profile.gender === "Male" ? "selected" : ""}>Male</option>
+      <option ${profile.gender === "Female" ? "selected" : ""}>Female</option>
+    </select>
+  `;
+
+  // Student drawer: attendance page
+  drawerEl.innerHTML += `
+    <button class="drawer-btn" onclick="goToAttendance()">📘 My Attendance</button>
+  `;
+}
+
+/* PROFILE PICTURE */
+const profilePic = $("profilePic");
+const uploadPic  = $("uploadPic");
+
+if (profile.profilePic) profilePic.src = profile.profilePic;
+
+profilePic.onclick = () => uploadPic.click();
+
+uploadPic.onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = x => {
+    profilePic.src = x.target.result;
+    profile.profilePic = x.target.result;
+    persistProfile();
+    showToast("Profile Picture Updated!", loggedInRole);
+  };
+  r.readAsDataURL(f);
+};
+
+/* SAVE PROFILE BUTTON */
+function saveProfile(){
+  profile.name = $("profileName").innerText || profile.name;
+  if (loggedInRole === "teacher") {
+    profile.gender = $("gender").value;
+    profile.subject = $("subject").value.trim();
+  } else {
+    profile.rollno = $("rollno").value.trim();
+    profile.gender = $("gender").value;
+  }
+  persistProfile();
+  showToast("Profile Saved!", loggedInRole);
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function goToSchedule(){ location.href = "schedule.html"; }
+function goToFind(){ location.href = "find.html"; }
+function goToAttendance(){ location.href = "attendance.html"; }
+function logout(){
+  clearAuth();
+  location.href = "index.html";
+}
+
+/* =========================================================
+   TEACHER: LOAD CLASSES + QR SESSION
+========================================================= */
+let teacherClasses = [];
+let qr = null;
+let qrExpireTimer = null;
+let qrCountdownTimer = null;
+let qrActive = false;
+let currentSessionExpiry = null;
+
+async function loadTeacherClasses(){
+  if (loggedInRole !== "teacher") return;
+  try {
+    const res = await apiFetch("/classes/");
+    if (!res.ok) {
+      console.error("Failed to load classes");
+      return;
+    }
+    teacherClasses = await res.json();
+  } catch (err) {
+    console.error("Error loading classes", err);
+  }
+}
+
+if (loggedInRole === "teacher") {
+  loadTeacherClasses();
+}
+
+/* CLASS POPUP */
+function openClassSelectionPopup(){
+  if (loggedInRole !== "teacher") return;
+
+  if (!teacherClasses || teacherClasses.length === 0) {
+    alert("No classes found! Add one in Schedule page.");
+    return;
+  }
+
+  const select = $("classSelect");
+  select.innerHTML = "";
+  teacherClasses.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${c.name} (${c.subject || ""})`;
+    select.appendChild(opt);
+  });
+
+  $("classPopupOverlay").style.display = "flex";
+}
+
+let selectedClass = null;
+
+$("classPopupContinueBtn").onclick = () => {
+  const dd = $("classSelect");
+  const id = dd.value;
+  selectedClass = teacherClasses.find(c => c.id === id);
+  if (!selectedClass) {
+    alert("Please select a class.");
+    return;
+  }
+  $("classPopupOverlay").style.display = "none";
+  startQrSessionWithLocation();
+};
+
+function clearQrCountdown(){
+  if (qrCountdownTimer) {
+    clearInterval(qrCountdownTimer);
+    qrCountdownTimer = null;
+  }
+  $("qrCountdown").innerText = "";
+}
+
+async function startQrSessionWithLocation(){
+  const qrBtn = $("generateQrBtn");
+
+  // If already active → terminate session locally
+  if (qrActive) {
+    qr = null;
+    $("qrCode").innerHTML = "";
+    $("qrExpired").style.display = "none";
+    clearQrCountdown();
+    if (qrExpireTimer) clearTimeout(qrExpireTimer);
+    qrActive = false;
+    currentSessionExpiry = null;
+    qrBtn.textContent = "Generate QR";
+    qrBtn.style.background = "#ff8800";
+    showToast("QR Terminated", "teacher");
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported in this browser.");
+    return;
+  }
+
+  const distanceLimit = Number($("distanceLimit").value) || 200;
+  const durationMinutes = Number($("timeLimit").value) || 5;
+
+  qrBtn.disabled = true;
+  qrBtn.textContent = "Getting location...";
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const body = {
+        classId: selectedClass.id,
+        className: selectedClass.name,
+        subject: selectedClass.subject,
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        distanceLimit,
+        durationMinutes
+      };
+
+      const res = await apiFetch("/qr/start", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to start QR session.");
+        qrBtn.disabled = false;
+        qrBtn.textContent = "Generate QR";
+        return;
+      }
+
+      const session = data.session;
+      const qrPayload = data.qrPayload || { sessionId: session.sessionId };
+
+      // Create QR
+      qr = new QRious({
+        element: document.createElement("canvas"),
+        size: 250,
+        value: JSON.stringify(qrPayload)
+      });
+
+      const qrBox = $("qrCode");
+      qrBox.innerHTML = "";
+      qrBox.appendChild(qr.element);
+
+      $("qrExpired").style.display = "none";
+      clearQrCountdown();
+      if (qrExpireTimer) clearTimeout(qrExpireTimer);
+
+      const nowMs = Date.now();
+      const expiryMs = session.expiry || (nowMs + durationMinutes * 60000);
+      currentSessionExpiry = expiryMs;
+      const remainingMs = Math.max(0, expiryMs - nowMs);
+
+      // Expiry timeout
+      qrExpireTimer = setTimeout(() => {
+        $("qrExpired").style.display = "block";
+        qrActive = false;
+        currentSessionExpiry = null;
+        qrBtn.textContent = "Generate QR";
+        qrBtn.style.background = "#ff8800";
+        clearQrCountdown();
+        showToast("QR Expired", "teacher");
+      }, remainingMs);
+
+      // Countdown UI
+      function updateCountdown(){
+        if (!currentSessionExpiry) {
+          clearQrCountdown();
+          return;
+        }
+        const diff = currentSessionExpiry - Date.now();
+        if (diff <= 0) {
+          $("qrCountdown").innerText = "Expired";
+          clearQrCountdown();
+          return;
+        }
+        const totalSec = Math.floor(diff / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        $("qrCountdown").innerText =
+          `Expires in ${min}m ${sec.toString().padStart(2,'0')}s`;
+      }
+      updateCountdown();
+      qrCountdownTimer = setInterval(updateCountdown, 1000);
+
+      qrActive = true;
+      qrBtn.textContent = "Terminate QR";
+      qrBtn.style.background = "linear-gradient(135deg,#cc0000,#ff4444)";
+      showToast("QR Generated!", "teacher");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to start QR session.");
+      qrBtn.textContent = "Generate QR";
+    } finally {
+      qrBtn.disabled = false;
+    }
+
+  }, err => {
+    console.error("Geo error", err);
+    alert("Location permission is required to generate QR.");
+    qrBtn.disabled = false;
+    qrBtn.textContent = "Generate QR";
+  });
+}
+
+/* Teacher QR button:
+   - If no active QR → open class popup
+   - If active QR → terminate directly
+*/
+if (loggedInRole === "teacher") {
+  $("generateQrBtn").onclick = function(){
+    if (qrActive) {
+      // terminate
+      startQrSessionWithLocation();
+    } else {
+      openClassSelectionPopup();
+    }
+  };
+}
+
+/* =========================================================
+   STUDENT: SCAN + MARK ATTENDANCE
+========================================================= */
+let scanner = null;
+
+function detectDevice(){
+  const ua = navigator.userAgent || "";
+  if (/Android/i.test(ua)) return "Android";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  return "Web";
+}
+
+async function handleScannedQR(text){
+  const scanResult = $("scanResult");
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    scanResult.innerText = "Invalid QR";
+    showToast("Invalid QR", "student");
+    return;
+  }
+
+  if (!payload.sessionId) {
+    scanResult.innerText = "Invalid QR";
+    showToast("Invalid QR", "student");
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported.");
+    return;
+  }
+
+  scanResult.innerText = "Getting your location...";
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const body = {
+        sessionId: payload.sessionId,
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        device: detectDevice(),
+        studentName: profile.name,
+        rollno: profile.rollno || null
+      };
+
+      const res = await apiFetch("/attendance/mark", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === "too_far") {
+          scanResult.innerText = "❌ Too Far!";
+          showToast("Too far from allowed location!", "student");
+        } else if (data.error === "Session expired") {
+          scanResult.innerText = "❌ QR Expired";
+          showToast("QR session expired!", "student");
+        } else {
+          scanResult.innerText = "❌ Failed to mark attendance";
+          showToast(data.error || "Failed to mark attendance", "student");
+        }
+        return;
+      }
+
+      scanResult.innerText = "✅ Attendance Marked!";
+      showToast("Attendance Marked!", "student");
+      stopScanner();
+
+    } catch (err) {
+      console.error(err);
+      scanResult.innerText = "❌ Error marking attendance";
+      showToast("Error marking attendance", "student");
+    }
+  }, err => {
+    console.error("Geo error", err);
+    scanResult.innerText = "Location permission denied.";
+    showToast("Location permission denied", "student");
+  });
+}
+
+async function startScanner(){
+  if (loggedInRole !== "student") return;
+  if (scanner) return;
+
+  // Check basic capability
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $("scanResult").innerText = "Camera API not supported.";
+    showToast("Camera API not supported", "student");
+    return;
+  }
+
+  // Secure context check (must be HTTPS or localhost)
+  if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+    $("scanResult").innerText = "Camera requires HTTPS / localhost.";
+    showToast("Serve this page over HTTPS (or use localhost) for camera access.", "student");
+    return;
+  }
+
+  $("qrVideo").style.display = "block";
+  $("stopCameraBtn").style.display = "inline-block";
+  $("startCameraBtn").style.display = "none";
+
+  scanner = new Html5Qrcode("qrVideo");
+
+  try {
+    // Enumerate cameras first (more reliable on mobile)
+    const cameras = await Html5Qrcode.getCameras();
+    let cameraId = null;
+    if (cameras && cameras.length) {
+      // Prefer a camera with "back" or "environment" in label if available
+      cameraId = (cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[0]).id;
+    }
+
+    // Build start config with explicit videoConstraints for mobile
+    const qrConfig = {
+      fps: 10,
+      qrbox: 240,
+      // note: html5-qrcode will use these as constraints passed to getUserMedia
+      // they also help mobile choose the back camera
+      videoConstraints: cameraId ? { deviceId: { exact: cameraId } }
+                                : { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    };
+
+    await scanner.start(
+      // camera config: pass deviceId or facingMode
+      cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" },
+      qrConfig,
+      (decodedText) => { handleScannedQR(decodedText); },
+      (errorMessage) => { /* per-frame error - ignore */ }
+    );
+
+    // html5-qrcode injects a <video> element inside #qrVideo.
+    // Ensure playsinline so iOS doesn't force fullscreen (and that autoplay works).
+    // Wait a tick for the video element to be created.
+    setTimeout(() => {
+      try {
+        const video = document.querySelector("#qrVideo video");
+        if (video) {
+          video.setAttribute("playsinline", "");
+          video.setAttribute("autoplay", "");
+          video.muted = true; // ensure autoplay isn't blocked
+          // On some devices, calling play() helps
+          const p = video.play();
+          if (p && p.catch) p.catch(()=>{/* ignore */});
+        }
+      } catch(e){ /* ignore */ }
+    }, 250);
+
+    $("scanResult").innerText = "Point camera at the QR code...";
+    showToast("Camera started", "student");
+
+  } catch (err) {
+    console.error("Camera start failed:", err);
+    $("scanResult").innerText = "Unable to access camera.";
+    showToast("Unable to access camera", "student");
+
+    // cleanup UI
+    $("qrVideo").style.display = "none";
+    $("stopCameraBtn").style.display = "none";
+    $("startCameraBtn").style.display = "inline-block";
+    try { scanner.clear(); } catch(e){}
+    scanner = null;
+  }
+}
+
+
+function stopScanner(){
+  if(!scanner) return;
+  scanner.stop().then(() => {
+    scanner.clear();
+    scanner = null;
+    $("qrVideo").style.display = "none";
+    $("stopCameraBtn").style.display = "none";
+    $("startCameraBtn").style.display = "inline-block";
+    $("scanResult").innerText = "Scan a QR code...";
+  }).catch(err => {
+    console.error("Stop scanner error", err);
+  });
+}
+
+/* Bind student buttons */
+if (loggedInRole === "student") {
+  $("startCameraBtn").onclick = startScanner;
+  $("stopCameraBtn").onclick = stopScanner;
+}
+</script>
+
+</body>
+</html>
